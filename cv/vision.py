@@ -28,8 +28,8 @@ class VisionProcess(threading.Thread):
         self.daemon = True
 
     def run(self):
-        cap=cv2.VideoCapture("http://192.168.43.1:8080/videofeed")
-        cap.set(cv2.CAP_PROP_BRIGHTNESS,0.1)
+        cap=cv2.VideoCapture(1)
+#        cap.set(cv2.CAP_PROP_BRIGHTNESS,0.1)
 #        cap.set(cv2.CAP_PROP_SATURATION,0.4)
         red_orange = 0.5  # type: int  555!
         global _update_flag
@@ -38,70 +38,95 @@ class VisionProcess(threading.Thread):
         global _show_select_face_flag
         while 1:
             _, image = cap.read()
-            k = 25
-            grids = [0] * 9
-            grid_colors = [0] * 9
-            grid_center = [(145, 92), (305, 92), (480, 92),
-                           (145, 250), (305, 250), (480, 250),
-                           (145, 390), (305, 390), (480, 390)]
-            for i in range(9):
-                center=grid_center[i]
-                x1=center[0]-k
-                x2=center[0]+k
-                y1=center[1]-k
-                y2=center[1]+k 
-                grids[i]=image[y1:y2,x1:x2]
-                grid=grids[i]*1
-                b=int(np.average(grid[:,:,0]))
-                g=int(np.average(grid[:,:,1]))
-                r=int(np.average(grid[:,:,2]))
-                red_flag=0
-                green_flag=0
-                white_flag=0
-                if r+b+g<200:
-                    red_flag=1
-                if r<10:
-                    green_flag=1
-                if min([r,g,b])/(max([r,g,b])+0.01)>0.80:
-                    white_flag=1
-                grid[:,:]=(b,g,r)
-                cvt=cv2.cvtColor(grid, cv2.COLOR_BGR2HSV)
-                h=cvt[0,0,0]
-                s=cvt[0,0,1]
-                # v=cvt[0,0,2]
-                if (white_flag):
-                    grids[i][:,:]=(0,0,0)
-                    grid_colors[i]='D'       
+            image = image[140:450, 180:550]
+            k = 8 
+            grid_colors_A = [0] * 9
+            grid_colors_B = [0] * 9
+            face_number_A = 0
+            face_number_B = 0
+            grid_center_list = [[(59 , 91 ), (95 , 84 ), (142, 66 ), 
+                                 (62 , 156), (99 , 152), (147, 148), 
+                                 (66 , 223), (102, 227), (152, 229)],
+                                [(203, 66 ), (252, 79 ), (289, 86 ),
+                                 (211, 148), (256, 152), (292, 148),
+                                 (214, 229), (259, 221), (293, 212)]]
+            for major in range(2):
+                grid_center = grid_center_list[major]
+                for i in range(9):
+                    grid_colors = [0] * 9
+                    grids = [0] * 9
+                    center=grid_center[i]
+                    x1=center[0]-k
+                    x2=center[0]+k
+                    y1=center[1]-k
+                    y2=center[1]+k 
+                    grids[i]=image[y1:y2,x1:x2]
+                    grid=grids[i]*1
+                    b=int(np.average(grid[:,:,0]))
+                    g=int(np.average(grid[:,:,1]))
+                    r=int(np.average(grid[:,:,2]))
+                    red_flag=0
+                    green_flag=0
+                    white_flag=0
+                    if r+b+g<200:
+                        red_flag=1
+                    if r<10:
+                        green_flag=1
+                    if min([r,g,b])/(max([r,g,b])+0.01)>0.80:
+                        white_flag=1
+                    grid[:,:]=(b,g,r)
+                    cvt=cv2.cvtColor(grid, cv2.COLOR_BGR2HSV)
+                    h=cvt[0,0,0]
+                    s=cvt[0,0,1]
+                    # v=cvt[0,0,2]
+                    if (white_flag):
+                        grids[i][:,:]=(0,0,0)
+                        grid_colors[i]='D'       
+                    else:
+                        if (h>=0 and h<25) or (h>=165 and h<180):
+                            if red_flag:
+                                grids[i][:,:]=(0,0,255)
+                                grid_colors[i]='F'
+                            else:
+                                grids[i][:,:]=(204,50,153)
+                                grid_colors[i]='B'
+                        if h>=25 and h<100:
+                            if green_flag:
+                                grids[i][:,:]=(0,255,0)
+                                grid_colors[i]='R'
+                            else:
+                                grids[i][:,:]=(0,255,255)
+                                grid_colors[i]='U'
+                        if h>=100 and h<165:
+                            grids[i][:,:]=(255,0,0)
+                            grid_colors[i]='L'
+                if grid_colors[4] == 'D': face_number = 3  # white
+                if grid_colors[4] == 'F': face_number = 2  # red
+                if grid_colors[4] == 'B': face_number = 5  # orange
+                if grid_colors[4] == 'U': face_number = 0  # yellow
+                if grid_colors[4] == 'R': face_number = 1  # green
+                if grid_colors[4] == 'L': face_number = 4  # blue
+                if major == 0:
+                    grid_colors_A = grid_colors
+                    face_number_A = face_number 
                 else:
-                    if (h>=0 and h<25) or (h>=165 and h<180):
-                        if red_flag:
-                            grids[i][:,:]=(0,0,255)
-                            grid_colors[i]='F'
-                        else:
-                            grids[i][:,:]=(204,50,153)
-                            grid_colors[i]='B'
-                    if h>=25 and h<100:
-                        if green_flag:
-                            grids[i][:,:]=(0,255,0)
-                            grid_colors[i]='R'
-                        else:
-                            grids[i][:,:]=(0,255,255)
-                            grid_colors[i]='U'
-                    if h>=100 and h<165:
-                        grids[i][:,:]=(255,0,0)
-                        grid_colors[i]='L'
-            if grid_colors[4] == 'D': face_number = 3  # white
-            if grid_colors[4] == 'F': face_number = 2  # red
-            if grid_colors[4] == 'B': face_number = 5  # orange
-            if grid_colors[4] == 'U': face_number = 0  # yellow
-            if grid_colors[4] == 'R': face_number = 1  # green
-            if grid_colors[4] == 'L': face_number = 4  # blue
+                    grid_colors_B[6] = grid_center[0]
+                    grid_colors_B[3] = grid_center[1]
+                    grid_colors_B[0] = grid_center[2]
+                    grid_colors_B[7] = grid_center[3]
+                    grid_colors_B[4] = grid_center[4]
+                    grid_colors_B[1] = grid_center[5]
+                    grid_colors_B[8] = grid_center[6]
+                    grid_colors_B[5] = grid_center[7]
+                    grid_colors_B[2] = grid_center[8]
+                    face_number_B = face_number 
 
             if _update_flag:
-                surfaces[face_number]=grid_colors
-                cv2.imwrite("record_image/"+str(face_number+1)+".JPEG",image)
-                _update_flag=0
-            
+                surfaces[face_number_A] = grid_colors_A
+                surfaces[face_number_B] = grid_colors_B
+                cv2.imwrite("record_image/"+str(face_number_A+1)+".JPEG",image)
+                cv2.imwrite("record_image/"+str(face_number_B+1)+".JPEG",image)
+                _update_flag=0 
             if _show_select_face_flag==-1:
                 cv2.destroyWindow('face_record')
                 _show_select_face_flag=0

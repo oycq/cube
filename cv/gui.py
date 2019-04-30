@@ -5,7 +5,7 @@ import Tkinter as tk
 import time
 import mission
 import plan
-import blue
+#import blue
 import threading
 
 
