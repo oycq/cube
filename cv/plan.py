@@ -31,6 +31,7 @@ def surfaces_2_plan(surfaces):
     socket_input_string = ''
     for i in range(6):
         for j in range(9):
+            print(surfaces)
             socket_input_string += surfaces[i][j]
     #        print(string)
     s.sendall((socket_input_string + '\n').encode())

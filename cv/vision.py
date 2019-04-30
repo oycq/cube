@@ -28,7 +28,7 @@ class VisionProcess(threading.Thread):
         self.daemon = True
 
     def run(self):
-        cap=cv2.VideoCapture(1)
+        cap=cv2.VideoCapture(0)
 #        cap.set(cv2.CAP_PROP_BRIGHTNESS,0.1)
 #        cap.set(cv2.CAP_PROP_SATURATION,0.4)
         red_orange = 0.5  # type: int  555!
@@ -47,9 +47,9 @@ class VisionProcess(threading.Thread):
             grid_center_list = [[(59 , 91 ), (95 , 84 ), (142, 66 ), 
                                  (62 , 156), (99 , 152), (147, 148), 
                                  (66 , 223), (102, 227), (152, 229)],
-                                [(203, 66 ), (252, 79 ), (289, 86 ),
-                                 (211, 148), (256, 152), (292, 148),
-                                 (214, 229), (259, 221), (293, 212)]]
+                                [(203, 66 ), (242, 79 ), (285, 76 ),
+                                 (203, 148), (244, 144), (292, 138),
+                                 (203, 229), (259, 221), (293, 212)]]
             for major in range(2):
                 grid_center = grid_center_list[major]
                 for i in range(9):
@@ -68,9 +68,9 @@ class VisionProcess(threading.Thread):
                     red_flag=0
                     green_flag=0
                     white_flag=0
-                    if r+b+g<200:
+                    if r+b+g<300:
                         red_flag=1
-                    if r<10:
+                    if r<80:
                         green_flag=1
                     if min([r,g,b])/(max([r,g,b])+0.01)>0.80:
                         white_flag=1
