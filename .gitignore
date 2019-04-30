@@ -1,5 +1,4 @@
 *.pyc
-*.pyd
 solver/phase*
 cv/record_image
 *__pycache__
