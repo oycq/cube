@@ -89,6 +89,21 @@ root.bind('<Alt-f>',lambda event: mission.add(['F']))
 root.bind('<Control-f>',lambda event: mission.add(['F\''])) 
 root.bind('<Alt-Control-f>',lambda event: mission.add(['F\'\''])) 
 
+root.bind('<Control-Alt-o>',lambda event: mission.add(['Odrive'])) 
+root.bind('<Control-i>',lambda event: mission.add(['Cal0'])) 
+root.bind('<Alt-i>',lambda event: mission.add(['Cal1'])) 
+root.bind('<q>',lambda event: mission.add(['OdDis'])) 
+root.bind('<Control-Alt-q>',lambda event: mission.add(['OdEn'])) 
+
+root.bind('<Control-Left>',lambda event: mission.add(['Od0R1'])) 
+root.bind('<Control-Shift-Left>',lambda event: mission.add(['Od0R2'])) 
+root.bind('<Control-Shift-Right>',lambda event: mission.add(['Od0R2'])) 
+root.bind('<Control-Right>',lambda event: mission.add(['Od0R3'])) 
+root.bind('<Alt-Left>',lambda event: mission.add(['Od1R1'])) 
+root.bind('<Alt-Shift-Left>',lambda event: mission.add(['Od1R2'])) 
+root.bind('<Alt-Shift-Right>',lambda event: mission.add(['Od1R2'])) 
+root.bind('<Alt-Right>',lambda event: mission.add(['Od1R3'])) 
+
 
 temp = tk.Button(root, text='+', command=lambda: mission.add(['+']), width=10)
 temp.grid(row=0, column=0, columnspan=1)  # +
