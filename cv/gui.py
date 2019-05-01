@@ -9,6 +9,12 @@ import plan
 import threading
 
 
+def manually_confirm_surface_A():
+    vision.update_surfaces_A()
+
+def manually_confirm_surface_B():
+    vision.update_surfaces_B()
+
 def manually_confirm_surface():
     vision.update_surfaces()
 
@@ -16,7 +22,6 @@ def execute():
     if not plan.surfaces_2_plan(vision.surfaces):
         return
     mission.add(plan.hardware_plan+['8'])
-
 
 
 def scan_surfaces():
@@ -86,8 +91,14 @@ temp.grid(row=2, column=0, columnspan=1)
 temp = tk.Button(root, text='->', command=lambda: mission.add([1]), width=10)
 temp.grid(row=2, column=2, columnspan=1)
 
-temp = tk.Button(root, text='manually comfirm', command=manually_confirm_surface, width=30)
-temp.grid(row=3, column=0, columnspan=3)
+temp = tk.Button(root, text='A', command=manually_confirm_surface_A, width=10)
+temp.grid(row=3, column=0, columnspan=1)
+
+temp = tk.Button(root, text='manually comfirm', command=manually_confirm_surface, width=10)
+temp.grid(row=3, column=1, columnspan=1)
+
+temp = tk.Button(root, text='B', command=manually_confirm_surface_B, width=10)
+temp.grid(row=3, column=2, columnspan=1)
 
 temp = tk.Button(root, text='scan', command=scan_surfaces, width=30)
 temp.grid(row=4, column=0, columnspan=3)

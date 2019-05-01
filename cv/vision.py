@@ -9,11 +9,21 @@ surfaces = ['RFDLUFDFR', 'FDBURBLRU', 'BRURFFFDF',
 face_number=0
 grid_colors=[]
 _update_flag=0
+_update_flag_A=0
+_update_flag_B=0
 _show_select_face_flag=0
 
 def update_surfaces():
     global _update_flag
     _update_flag=1
+
+def update_surfaces_A():
+    global _update_flag_A
+    _update_flag_A=1
+
+def update_surfaces_B():
+    global _update_flag_B
+    _update_flag_B=1
 
 def show_select_face(flag):
     global _show_select_face_flag
@@ -33,6 +43,8 @@ class VisionProcess(threading.Thread):
 #        cap.set(cv2.CAP_PROP_SATURATION,0.4)
         red_orange = 0.5  # type: int  555!
         global _update_flag
+        global _update_flag_A
+        global _update_flag_B
         global face_number
         global grid_colors
         global _show_select_face_flag
@@ -49,12 +61,12 @@ class VisionProcess(threading.Thread):
                                  (66 , 223), (102, 227), (152, 229)],
                                 [(203, 66 ), (242, 79 ), (285, 76 ),
                                  (203, 148), (244, 144), (292, 138),
-                                 (203, 229), (259, 221), (293, 212)]]
+                                 (203, 229), (249, 221), (293, 212)]]
             for major in range(2):
                 grid_center = grid_center_list[major]
+                grid_colors = [0] * 9
+                grids = [0] * 9
                 for i in range(9):
-                    grid_colors = [0] * 9
-                    grids = [0] * 9
                     center=grid_center[i]
                     x1=center[0]-k
                     x2=center[0]+k
@@ -68,7 +80,7 @@ class VisionProcess(threading.Thread):
                     red_flag=0
                     green_flag=0
                     white_flag=0
-                    if r+b+g<300:
+                    if r+b+g<250:
                         red_flag=1
                     if r<80:
                         green_flag=1
@@ -110,15 +122,7 @@ class VisionProcess(threading.Thread):
                     grid_colors_A = grid_colors
                     face_number_A = face_number 
                 else:
-                    grid_colors_B[6] = grid_center[0]
-                    grid_colors_B[3] = grid_center[1]
-                    grid_colors_B[0] = grid_center[2]
-                    grid_colors_B[7] = grid_center[3]
-                    grid_colors_B[4] = grid_center[4]
-                    grid_colors_B[1] = grid_center[5]
-                    grid_colors_B[8] = grid_center[6]
-                    grid_colors_B[5] = grid_center[7]
-                    grid_colors_B[2] = grid_center[8]
+                    grid_colors_B = grid_colors
                     face_number_B = face_number 
 
             if _update_flag:
@@ -127,6 +131,17 @@ class VisionProcess(threading.Thread):
                 cv2.imwrite("record_image/"+str(face_number_A+1)+".JPEG",image)
                 cv2.imwrite("record_image/"+str(face_number_B+1)+".JPEG",image)
                 _update_flag=0 
+
+            if _update_flag_A:
+                surfaces[face_number_A] = grid_colors_A
+                cv2.imwrite("record_image/"+str(face_number_A+1)+".JPEG",image)
+                _update_flag_A=0 
+
+            if _update_flag_B:
+                surfaces[face_number_B] = grid_colors_B
+                cv2.imwrite("record_image/"+str(face_number_B+1)+".JPEG",image)
+                _update_flag_B=0 
+
             if _show_select_face_flag==-1:
                 cv2.destroyWindow('face_record')
                 _show_select_face_flag=0

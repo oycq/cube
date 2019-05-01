@@ -2,6 +2,29 @@ import socket
 
 hardware_plan = []
 
+def human_readable(string):
+    data = []
+    for i in range(54):
+        char = string[i]
+        if char == 'D':
+            data.append('white  ')
+        if char == 'F':
+            data.append('red    ')
+        if char == 'B':
+            data.append('organge')
+        if char == 'U':
+            data.append('yellow ')
+        if char == 'R':
+            data.append('green  ')
+        if char == 'L':
+            data.append('blue   ')
+
+    for i in range(6):
+        data_sub = data[i*9: i*9+9]
+        print(data_sub[0:3])
+        print(data_sub[3:6])
+        print(data_sub[6:9])
+        print('-----',data_sub[4])
 
 def hardware_execute_entirety_rotate(number):
     reverse = [2, 1, 0, 3]
@@ -31,9 +54,8 @@ def surfaces_2_plan(surfaces):
     socket_input_string = ''
     for i in range(6):
         for j in range(9):
-            print(surfaces)
             socket_input_string += surfaces[i][j]
-    #        print(string)
+    human_readable(socket_input_string)
     s.sendall((socket_input_string + '\n').encode())
     socket_receieve_str = s.recv(2048).decode().strip('\n')
     s.close()
