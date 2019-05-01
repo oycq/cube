@@ -1,4 +1,4 @@
-#import blue
+import hardware 
 import time
 import threading
 
@@ -45,7 +45,7 @@ def execute_process():
                 command = queue.pop(0)
                 can_send = True
         if can_send:
-            blue.send_command(command)
+            hardware.send_command(command)
         else:
             time.sleep(0.02)
 

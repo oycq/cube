@@ -58,11 +58,37 @@ def pressKey(event):
 
 root = tk.Tk(className='cube solver')
 
-root.bind('<Up>',lambda event: mission.add([8]))
-root.bind('<Down>',lambda event: mission.add([9]))
-root.bind('<Left>',lambda event: mission.add(['+']))
-root.bind('<Right>',lambda event: mission.add(['-']))
-root.bind('<Key>',pressKey)
+root.bind('<Control-Alt-Shift-Up>',lambda event: mission.add(['Rise']))
+root.bind('<Control-Alt-Shift-Down>',lambda event: mission.add(['Drop']))
+root.bind('<Control-Up>',lambda event: mission.add(['Le']))
+root.bind('<Control-Down>',lambda event: mission.add(['Lc'])) 
+root.bind('<Alt-Up>',lambda event: mission.add(['Re'])) 
+root.bind('<Alt-Down>',lambda event: mission.add(['Rc'])) 
+
+root.bind('<Alt-u>',lambda event: mission.add(['U']))
+root.bind('<Control-u>',lambda event: mission.add(['U\''])) 
+root.bind('<Alt-Control-u>',lambda event: mission.add(['U\'\''])) 
+
+root.bind('<Alt-d>',lambda event: mission.add(['D']))
+root.bind('<Control-d>',lambda event: mission.add(['D\''])) 
+root.bind('<Alt-Control-d>',lambda event: mission.add(['D\'\''])) 
+
+root.bind('<Alt-l>',lambda event: mission.add(['L']))
+root.bind('<Control-l>',lambda event: mission.add(['L\''])) 
+root.bind('<Alt-Control-l>',lambda event: mission.add(['L\'\''])) 
+
+root.bind('<Alt-r>',lambda event: mission.add(['R']))
+root.bind('<Control-r>',lambda event: mission.add(['R\''])) 
+root.bind('<Alt-Control-r>',lambda event: mission.add(['R\'\''])) 
+
+root.bind('<Alt-b>',lambda event: mission.add(['B']))
+root.bind('<Control-b>',lambda event: mission.add(['B\''])) 
+root.bind('<Alt-Control-b>',lambda event: mission.add(['B\'\''])) 
+
+root.bind('<Alt-f>',lambda event: mission.add(['F']))
+root.bind('<Control-f>',lambda event: mission.add(['F\''])) 
+root.bind('<Alt-Control-f>',lambda event: mission.add(['F\'\''])) 
+
 
 temp = tk.Button(root, text='+', command=lambda: mission.add(['+']), width=10)
 temp.grid(row=0, column=0, columnspan=1)  # +
