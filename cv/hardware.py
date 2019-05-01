@@ -30,7 +30,7 @@ def control_pneumatic_valve(command):
     string_to_send = '' 
     for i in range(5):
         string_to_send += pneumatic_table[i][pneumatic_states[i]]
-    ser.write(string_to_send) 
+    ser.write(string_to_send.encode()) 
     print(string_to_send)
 
 #ser.write('aBcDe')

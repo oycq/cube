@@ -1,7 +1,7 @@
 # encoding=utf-8
 import start_solver
 import vision
-import Tkinter as tk
+import tkinter as tk
 import time
 import mission
 import plan
