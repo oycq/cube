@@ -110,13 +110,13 @@ def odrive_enable():
     odrv.axis1.requested_state = 8
 
 def check_based_position():
-    if abs(odrv.axis0.encoder.pos_estimate - odrv_angles_bias[0]) >15 or abs(odrv.axis1.encoder.pos_estimate - odrv_angles_bias[1]) > 15: 
+    if abs(odrv.axis0.encoder.pos_estimate - odrv_angles_bias[0]) >90 or abs(odrv.axis1.encoder.pos_estimate - odrv_angles_bias[1]) > 90: 
             print('Not start at based postion!')
             os.abort()
 
 def odrive_rotate(motorID, angle):
     global odrv_angles_bias,odrv_angles
-    delta_range = 10
+    delta_range = 30
     achieve_count = -5
     if angle == 180:
         odrv_angles[motorID] += 4096
@@ -143,7 +143,7 @@ def odrive_rotate(motorID, angle):
             achieve_count += 1
         if achieve_count >=0:
             break
-        if i > 150:
+        if i > 100:
             odrv.axis0.requested_state = 1
             odrv.axis1.requested_state = 1
             print('Can not move to expect position, Be careful!')
@@ -155,7 +155,8 @@ def odrive_rotate(motorID, angle):
 def cubic_rotate(command):
     print(command)
     global last_rotate_states
-    clamp_time = 0.080
+    delay_time = 0.035
+    clamp_time = 0.080 - delay_time 
     release_time = 0.080
     dict = {
             'L3': ['AbCD', ( 0 ,  90), 'ABcd', ( 0 , -90)],
@@ -174,6 +175,15 @@ def cubic_rotate(command):
                    'aBCD', (-90 , 0 ), 'abCD', (+90,  0 )],
             'B1': ['ABcd', ( 90 , 0 ), 'abCD', (-90,  0 ),
                    'ABCd', ( 0  ,-90), 'ABcd', ( 0 , +90)]
+#            'L2': ['AbCD', ( 0 , -180), 'ABCde' ,'ABcd', ( 0 , 180)],
+#            'R2': ['ABCd', ( 0 , -90), 'ABcd', ( 0 , +90)],
+#            'U2': ['ABcD', (-90,  0 ), 'abCD', (+90,  0 )],
+#            'D2': ['aBCD', (-90 , 0 ), 'abCD', (+90,  0 )],
+#            'F2': ['abCD', ( 0 ,  90), 'ABcd', ( 0 , -90),
+#                   'aBCD', (-90 , 0 ), 'abCD', (+90,  0 )],
+#            'B2': ['ABcd', ( 90 , 0 ), 'abCD', (-90,  0 ),
+#                   'ABCd', ( 0  ,-90), 'ABcd', ( 0 , +90)]
+
 
              }
     if odrive_is_connected:
@@ -209,7 +219,9 @@ def cubic_rotate(command):
                     print('ser:  '+string_to_send)
                 else:
                     print(string_to_send)
-                time.sleep(clamp_time)
+                time.sleep(release_time)
+            else:
+                time.sleep(delay_time)
             last_rotate_states = item
         else:
             if odrive_is_connected and serial_is_connected:
