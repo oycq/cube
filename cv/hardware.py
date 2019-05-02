@@ -1,6 +1,7 @@
 import serial
 import time
 import odrive
+import os
 
 serial_is_connected = 0
 pneumatic_states = [0, 0, 0, 0, 0]
@@ -27,11 +28,11 @@ def control_pneumatic_valve(command):
         pneumatic_states[4] = 1
     if command == 'Drop':
         pneumatic_states[4] = 0
-
     string_to_send = '' 
     for i in range(5):
         string_to_send += pneumatic_table[i][pneumatic_states[i]]
-    ser.write(string_to_send.encode()) 
+    if serial_is_connected:
+        ser.write(string_to_send.encode()) 
     print(string_to_send)
 
 
@@ -71,6 +72,8 @@ def odrive_connect():
         odrive_is_connected = 1
         print("Odrive Connected")
 
+#odrive_connect()
+
 def odrive_calibration(motorID):
     global ser
     global odrv
@@ -98,8 +101,15 @@ def odrive_enable():
     odrv.axis0.requested_state = 8
     odrv.axis1.requested_state = 8
 
+def check_based_position():
+    if abs(odrv.axis0.encoder.pos_estimate - odrv_angles_bias[0]) >15 or abs(odrv.axis1.encoder.pos_estimate - odrv_angles_bias[1]) > 15: 
+            print('Not start at based postion!')
+            os.abort()
+
 def odrive_rotate(motorID, angle):
     global odrv_angles_bias,odrv_angles
+    delta_range = 5
+    achieve_count = -5
     if angle == 180:
         if odrv_angles[motorID] > 2048:
             odrv_angles[motorID] -= 4096
@@ -109,14 +119,91 @@ def odrive_rotate(motorID, angle):
         odrv_angles[motorID] += 2048
     if angle == 270:
         odrv_angles[motorID] -= 2048
+    if angle == -90:
+        odrv_angles[motorID] -= 2048
     pos = odrv_angles[motorID] + odrv_angles_bias[motorID]
     if motorID == 0:
         odrv.axis0.controller.move_to_pos(pos)
     else:
         odrv.axis1.controller.move_to_pos(pos)
+    for i in range(500):
+        if motorID == 0:
+            pos_estimate = odrv.axis0.encoder.pos_estimate
+        else:
+            pos_estimate = odrv.axis1.encoder.pos_estimate
+        delta = abs(pos_estimate - pos)
+        if delta < delta_range:
+            achieve_count += 1
+        if achieve_count >=0:
+            break
+        if i > 300:
+            odrv.axis0.requested_state = 1
+            odrv.axis1.requested_state = 1
+            print('Can not move to expect position, Be careful!')
+            os.abort()
+        #print('0:  %7.1f   1:  %7.1f'%(odrv_angles[0],odrv_angles[1]))
+        print('%4d   %5.2f   %5.2f'%(i,pos_estimate,delta))
+        time.sleep(0.001)
 
+last_rotate_states = 'abcd'
+def cubic_rotate(command):
+    print(command)
+    global last_rotate_states
+    clamp_time = 0.200
+    release_time = 0.200
+    dict = {
+            'L3': ['AbCD', ( 0 , -90), 'ABcd', ( 0 ,  90)],
+            'R3': ['ABCd', ( 0 ,  90), 'ABcd', ( 0 , -90)],
+            'U3': ['ABcD', ( 90,  0 ), 'abCD', (-90,  0 )],
+            'D3': ['aBCD', ( 90 , 0 ), 'abCD', (-90,  0 )],
+            'F3': ['abCD', ( 0 ,  90), 'ABcd', ( 0 , -90),
+                   'aBCD', ( 90 , 0 ), 'abCD', (-90,  0 )],
+            'D3': ['ABcd', ( 90 , 0 ), 'abCD', (-90,  0 ),
+                   'ABCd', ( 0  , 90), 'ABcd', ( 0 , -90)],
+            'L1': ['AbCD', ( 0 , +90), 'ABcd', ( 0 , -90)],
+            'R1': ['ABCd', ( 0 , -90), 'ABcd', ( 0 , +90)],
+            'U1': ['ABcD', (-90,  0 ), 'abCD', (+90,  0 )],
+            'D1': ['aBCD', (-90 , 0 ), 'abCD', (+90,  0 )],
+            'F1': ['abCD', ( 0 , -90), 'ABcd', ( 0 , +90),
+                   'aBCD', (-90 , 0 ), 'abCD', (+90,  0 )],
+            'D1': ['ABcd', (-90 , 0 ), 'abCD', (+90,  0 ),
+                   'ABCd', ( 0  ,-90), 'ABcd', ( 0 , +90)]
 
-#ser.write('aBcDe')
+             }
+    if odrive_is_connected:
+        check_based_position()
+    for item in dict[command]: 
+        if isinstance(item, str):
+            print(last_rotate_states, item)
+            string_to_send = ''
+            for i in range(4):
+                if last_rotate_states[i] > item[i]:
+                    string_to_send += item[i]
+            if len(string_to_send):
+                if serial_is_connected:
+                    ser.write(string_to_send.encode())
+                else:
+                    print(string_to_send)
+                time.sleep(clamp_time)
+            string_to_send = ''
+            for i in range(4):
+                if last_rotate_states[i] < item[i]:
+                    string_to_send += item[i]
+            if len(string_to_send):
+                if serial_is_connected:
+                    ser.write(string_to_send.encode())
+                else:
+                    print(string_to_send)
+                time.sleep(clamp_time)
+            last_rotate_states = item
+        else:
+            if odrive_is_connected and serial_is_connected:
+                odrive_rotate(0 ,item[0])
+                odrive_rotate(1 ,item[1])
+            else:
+                print(item)
+                time.sleep(1)
+
 def send_command(command):
     if command == 'Odrive':
         odrive_connect()
@@ -125,12 +212,8 @@ def send_command(command):
     if command == 'Cal1':
         odrive_calibration(1)
 
-    if serial_is_connected:
-        if command in ['Le', 'Lc', 'Re', 'Rc', 'Rise', 'Drop']:
-            control_pneumatic_valve(command)
-    else:
-        print(command)
-        time.sleep(1)
+    if command in ['Le', 'Lc', 'Re', 'Rc', 'Rise', 'Drop']:
+        control_pneumatic_valve(command)
 
     if odrive_is_connected:
         if command == 'OdEn':
@@ -139,4 +222,6 @@ def send_command(command):
             odrive_disable()
         if command in ['Od0R1', 'Od0R3', 'Od0R2', 'Od1R1', 'Od1R3', 'Od1R2']:
             odrive_rotate(int(command[2]), int(command[-1]) * 90)
+    if command in ['L1','L2','L3','R1','R2','R3','U1','U2','U3','D1','D2','D3','F1','F2','F3','B1','B2','B3']:
+        cubic_rotate(command)
 

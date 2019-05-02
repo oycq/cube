@@ -149,7 +149,7 @@ class VisionProcess(threading.Thread):
                 cv2.imshow('face_record',
                            cv2.imread("record_image/"+str(_show_select_face_flag)+".JPEG"))
             
-            cv2.imshow('frame2', image)
+            #cv2.imshow('frame2', image)
             cv2.waitKey(20)
 
 
