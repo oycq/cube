@@ -6,6 +6,7 @@ import os
 serial_is_connected = 0
 pneumatic_states = [0, 0, 0, 0, 0]
 pneumatic_table = [['a', 'A'],['b', 'B'],['c', 'C'],['d','D'],['e', 'E']]
+last_rotate_states = 'abcd'
 try:
     ser = serial.Serial('/dev/ttyUSB0',115200)
 except Exception as error:
@@ -15,7 +16,13 @@ else:
     serial_is_connected = 1
     print("Serial Connected")
 def control_pneumatic_valve(command):
-    global pneumatic_state
+    global pneumatic_states
+    global last_rotate_states
+    for i in range(4):
+        if last_rotate_states[i] == chr(ord('a') + i):
+            pneumatic_states[i] = 0
+        else:
+            pneumatic_states[i] = 1
     if command == 'Le':
         pneumatic_states[0] = (pneumatic_states[0] + 1) % 2
     if command == 'Lc':
@@ -31,6 +38,7 @@ def control_pneumatic_valve(command):
     string_to_send = '' 
     for i in range(5):
         string_to_send += pneumatic_table[i][pneumatic_states[i]]
+    last_rotate_states = string_to_send[:4] 
     if serial_is_connected:
         ser.write(string_to_send.encode()) 
     print(string_to_send)
@@ -72,7 +80,7 @@ def odrive_connect():
         odrive_is_connected = 1
         print("Odrive Connected")
 
-#odrive_connect()
+odrive_connect()
 
 def odrive_calibration(motorID):
     global ser
@@ -108,13 +116,12 @@ def check_based_position():
 
 def odrive_rotate(motorID, angle):
     global odrv_angles_bias,odrv_angles
-    delta_range = 5
+    delta_range = 10
     achieve_count = -5
     if angle == 180:
-        if odrv_angles[motorID] > 2048:
-            odrv_angles[motorID] -= 4096
-        else:
-            odrv_angles[motorID] += 4096
+        odrv_angles[motorID] += 4096
+    if angle == -180:
+        odrv_angles[motorID] -= 4096
     if angle == 90:
         odrv_angles[motorID] += 2048
     if angle == 270:
@@ -136,37 +143,36 @@ def odrive_rotate(motorID, angle):
             achieve_count += 1
         if achieve_count >=0:
             break
-        if i > 300:
+        if i > 150:
             odrv.axis0.requested_state = 1
             odrv.axis1.requested_state = 1
             print('Can not move to expect position, Be careful!')
             os.abort()
         #print('0:  %7.1f   1:  %7.1f'%(odrv_angles[0],odrv_angles[1]))
-        print('%4d   %5.2f   %5.2f'%(i,pos_estimate,delta))
+        print('%4d  %4d  %5.2f   %5.2f'%(i,motorID,odrv_angles[motorID],delta))
         time.sleep(0.001)
 
-last_rotate_states = 'abcd'
 def cubic_rotate(command):
     print(command)
     global last_rotate_states
-    clamp_time = 0.200
-    release_time = 0.200
+    clamp_time = 0.080
+    release_time = 0.080
     dict = {
-            'L3': ['AbCD', ( 0 , -90), 'ABcd', ( 0 ,  90)],
+            'L3': ['AbCD', ( 0 ,  90), 'ABcd', ( 0 , -90)],
             'R3': ['ABCd', ( 0 ,  90), 'ABcd', ( 0 , -90)],
             'U3': ['ABcD', ( 90,  0 ), 'abCD', (-90,  0 )],
             'D3': ['aBCD', ( 90 , 0 ), 'abCD', (-90,  0 )],
             'F3': ['abCD', ( 0 ,  90), 'ABcd', ( 0 , -90),
                    'aBCD', ( 90 , 0 ), 'abCD', (-90,  0 )],
-            'D3': ['ABcd', ( 90 , 0 ), 'abCD', (-90,  0 ),
+            'B3': ['ABcd', ( 90 , 0 ), 'abCD', (-90,  0 ),
                    'ABCd', ( 0  , 90), 'ABcd', ( 0 , -90)],
-            'L1': ['AbCD', ( 0 , +90), 'ABcd', ( 0 , -90)],
+            'L1': ['AbCD', ( 0 , -90), 'ABcd', ( 0 ,  90)],
             'R1': ['ABCd', ( 0 , -90), 'ABcd', ( 0 , +90)],
             'U1': ['ABcD', (-90,  0 ), 'abCD', (+90,  0 )],
             'D1': ['aBCD', (-90 , 0 ), 'abCD', (+90,  0 )],
-            'F1': ['abCD', ( 0 , -90), 'ABcd', ( 0 , +90),
+            'F1': ['abCD', ( 0 ,  90), 'ABcd', ( 0 , -90),
                    'aBCD', (-90 , 0 ), 'abCD', (+90,  0 )],
-            'D1': ['ABcd', (-90 , 0 ), 'abCD', (+90,  0 ),
+            'B1': ['ABcd', ( 90 , 0 ), 'abCD', (-90,  0 ),
                    'ABCd', ( 0  ,-90), 'ABcd', ( 0 , +90)]
 
              }
@@ -176,12 +182,20 @@ def cubic_rotate(command):
         if isinstance(item, str):
             print(last_rotate_states, item)
             string_to_send = ''
+            if last_rotate_states == 'abcd':
+                last_rotate_states = ''
+                for i in range(4):
+                    if item[i] == chr(ord('a') + i):
+                        last_rotate_states += chr(ord('A') + i)
+                    else:
+                        last_rotate_states += chr(ord('a') + i)
             for i in range(4):
                 if last_rotate_states[i] > item[i]:
                     string_to_send += item[i]
             if len(string_to_send):
                 if serial_is_connected:
                     ser.write(string_to_send.encode())
+                    print('ser:  '+string_to_send)
                 else:
                     print(string_to_send)
                 time.sleep(clamp_time)
@@ -192,14 +206,17 @@ def cubic_rotate(command):
             if len(string_to_send):
                 if serial_is_connected:
                     ser.write(string_to_send.encode())
+                    print('ser:  '+string_to_send)
                 else:
                     print(string_to_send)
                 time.sleep(clamp_time)
             last_rotate_states = item
         else:
             if odrive_is_connected and serial_is_connected:
-                odrive_rotate(0 ,item[0])
-                odrive_rotate(1 ,item[1])
+                if item[0] != 0:
+                    odrive_rotate(0 ,item[0])
+                if item[1] != 0:
+                    odrive_rotate(1 ,item[1])
             else:
                 print(item)
                 time.sleep(1)
