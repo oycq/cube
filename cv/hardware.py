@@ -44,7 +44,8 @@ def control_pneumatic_valve(command):
     print(string_to_send)
 
 
-
+base_accel = 140
+ex_accel = 140
 odrive_is_connected = 0
 odrv = None
 odrv_angles_bias = [-2086, -2500]
@@ -62,8 +63,8 @@ def odrive_connect():
         odrv.axis0.encoder.config.use_index = True
         odrv.axis0.controller.config.vel_limit = 2 * 10000 
         odrv.axis0.trap_traj.config.vel_limit = 1 * 10000 
-        odrv.axis0.trap_traj.config.accel_limit = 140 * 10000
-        odrv.axis0.trap_traj.config.decel_limit = 140 * 10000
+        odrv.axis0.trap_traj.config.accel_limit = base_accel * 10000
+        odrv.axis0.trap_traj.config.decel_limit = base_accel * 10000
         odrv.axis0.encoder.config.use_index = True
         odrv.axis0.controller.config.vel_limit = 5 * 10000 
         odrv.axis0.trap_traj.config.vel_limit = 3 * 10000 
@@ -71,8 +72,8 @@ def odrive_connect():
         odrv.axis1.encoder.config.use_index = True
         odrv.axis1.controller.config.vel_limit = 2 * 10000 
         odrv.axis1.trap_traj.config.vel_limit = 1 * 10000 
-        odrv.axis1.trap_traj.config.accel_limit = 140 * 10000
-        odrv.axis1.trap_traj.config.decel_limit = 140 * 10000
+        odrv.axis1.trap_traj.config.accel_limit = base_accel * 10000
+        odrv.axis1.trap_traj.config.decel_limit = base_accel * 10000
         odrv.axis1.encoder.config.use_index = True
         odrv.axis1.controller.config.vel_limit = 10 * 10000 
         odrv.axis1.trap_traj.config.vel_limit = 9 * 10000 
@@ -152,6 +153,9 @@ def odrive_rotate(motorID, angle):
         print('%4d  %4d  %5.2f   %5.2f'%(i,motorID,odrv_angles[motorID],delta))
         time.sleep(0.001)
 
+    odrv.axis0.trap_traj.config.accel_limit = base_accel * 10000
+    odrv.axis0.trap_traj.config.accel_limit = base_accel * 10000
+
 def cubic_rotate(command):
     print(command)
     global last_rotate_states
@@ -174,15 +178,15 @@ def cubic_rotate(command):
             'F1': ['abCD', ( 0 ,  90), 'ABcd', ( 0 , -90),
                    'aBCD', (-90 , 0 ), 'abCD', (+90,  0 )],
             'B1': ['ABcd', ( 90 , 0 ), 'abCD', (-90,  0 ),
-                   'ABCd', ( 0  ,-90), 'ABcd', ( 0 , +90)]
-#            'L2': ['AbCD', ( 0 , -180), 'ABCde' ,'ABcd', ( 0 , 180)],
-#            'R2': ['ABCd', ( 0 , -90), 'ABcd', ( 0 , +90)],
-#            'U2': ['ABcD', (-90,  0 ), 'abCD', (+90,  0 )],
-#            'D2': ['aBCD', (-90 , 0 ), 'abCD', (+90,  0 )],
-#            'F2': ['abCD', ( 0 ,  90), 'ABcd', ( 0 , -90),
-#                   'aBCD', (-90 , 0 ), 'abCD', (+90,  0 )],
-#            'B2': ['ABcd', ( 90 , 0 ), 'abCD', (-90,  0 ),
-#                   'ABCd', ( 0  ,-90), 'ABcd', ( 0 , +90)]
+                   'ABCd', ( 0  ,-90), 'ABcd', ( 0 , +90)],
+            'L2': ['AbCD', ( 0 , -180), 'AbCd' ,'ABcd', ( 0 , 180)],
+            'R2': ['ABCd', ( 0 , -180), 'ABcd', ( 0 , 180)],
+            'U2': ['ABcD', (180,  0  ), 'aBcD','abCD', (-180,  0 )],
+            'D2': ['aBCD', (180 , 0  ), 'abCD', (-180,  0 )],
+            'F2': ['abCD', ( 0 ,  90 ), 'ABcd', ( 0 , -90),
+                   'aBCD', (180 , 0  ), 'abCD', (-180,  0 )],
+            'B2': ['ABcd', ( 90 , 0 ), 'abCD', (-90,  0 ),
+                   'ABCd', ( 0  ,-180), 'ABcd', ( 0 , 180)]
 
 
              }
@@ -190,6 +194,11 @@ def cubic_rotate(command):
         check_based_position()
     for item in dict[command]: 
         if isinstance(item, str):
+            if abs(ord(item[0]) - ord(item[1])) < 5:
+                if abs(ord(item[2]) - ord(item[3])) < 5:
+                    odrv.axis0.trap_traj.config.accel_limit = ex_accel * 10000
+                    odrv.axis1.trap_traj.config.accel_limit = ex_accel * 10000
+ 
             print(last_rotate_states, item)
             string_to_send = ''
             if last_rotate_states == 'abcd':
