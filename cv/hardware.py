@@ -81,7 +81,7 @@ def odrive_connect():
         odrive_is_connected = 1
         print("Odrive Connected")
 
-odrive_connect()
+#odrive_connect()
 
 def odrive_calibration(motorID):
     global ser

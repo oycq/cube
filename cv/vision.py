@@ -38,7 +38,7 @@ class VisionProcess(threading.Thread):
         self.daemon = True
 
     def run(self):
-        cap=cv2.VideoCapture(0)
+        cap=cv2.VideoCapture(1)
 #        cap.set(cv2.CAP_PROP_BRIGHTNESS,0.1)
 #        cap.set(cv2.CAP_PROP_SATURATION,0.4)
         red_orange = 0.5  # type: int  555!
@@ -51,17 +51,17 @@ class VisionProcess(threading.Thread):
         while 1:
             _, image = cap.read()
             image = image[140:450, 180:550]
-            k = 8 
+            k = 5 
             grid_colors_A = [0] * 9
             grid_colors_B = [0] * 9
             face_number_A = 0
             face_number_B = 0
-            grid_center_list = [[(59 , 91 ), (95 , 84 ), (142, 66 ), 
-                                 (62 , 156), (99 , 152), (147, 148), 
-                                 (66 , 223), (102, 227), (152, 229)],
-                                [(203, 66 ), (242, 79 ), (285, 76 ),
-                                 (203, 148), (244, 144), (292, 138),
-                                 (203, 229), (249, 221), (293, 212)]]
+            grid_center_list = [[(62 , 91 ), (101 , 84 ), (149, 80 ), 
+                                 (62 , 156), (99 , 157), (150, 165), 
+                                 (62 , 218), (100, 234), (150, 248)],
+                                [(213, 81 ), (259, 86 ), (292, 96 ),
+                                 (214, 167), (261, 159), (293, 157),
+                                 (213, 249), (262, 229), (293, 219)]]
             for major in range(2):
                 grid_center = grid_center_list[major]
                 grid_colors = [0] * 9
@@ -80,11 +80,11 @@ class VisionProcess(threading.Thread):
                     red_flag=0
                     green_flag=0
                     white_flag=0
-                    if r+b+g<250:
+                    if r+b+g<200:
                         red_flag=1
                     if r<80:
                         green_flag=1
-                    if min([r,g,b])/(max([r,g,b])+0.01)>0.80:
+                    if min([r,g,b])/(max([r,g,b])+0.01)>0.65:
                         white_flag=1
                     grid[:,:]=(b,g,r)
                     cvt=cv2.cvtColor(grid, cv2.COLOR_BGR2HSV)
@@ -149,7 +149,7 @@ class VisionProcess(threading.Thread):
                 cv2.imshow('face_record',
                            cv2.imread("record_image/"+str(_show_select_face_flag)+".JPEG"))
             
-            #cv2.imshow('frame2', image)
+            cv2.imshow('frame2', image)
             cv2.waitKey(20)
 
 
