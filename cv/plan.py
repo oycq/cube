@@ -11,7 +11,7 @@ def human_readable(string):
         if char == 'F':
             data.append('red    ')
         if char == 'B':
-            data.append('organge')
+            data.append('orange ')
         if char == 'U':
             data.append('yellow ')
         if char == 'R':

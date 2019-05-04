@@ -35,7 +35,7 @@ def update_surfaces_A(face_pos = 0):
 
 def update_surfaces_B(face_pos = 0):
     global _update_flag_B
-    global __current_face_pos
+    global current_face_pos
     current_face_pos = face_pos
     _update_flag_B=1
 
@@ -46,16 +46,17 @@ def trans_and_rotate_surface(face_pos, surface):
             if surface[i] == table_item_in_used[j]:
                 surface[i] = table_item_in_used[j]
                 break
-    rotate_table = [[9,8,7,6,5,4,3,2,1],
-            [7,4,1,8,5,2,9,6,3]]
-    if face_pos in [0, 1, 5]:
-        for item in rotate_table[0]:
+    rotate_table_180 = [9,8,7,6,5,4,3,2,1]
+    rotate_table_90 = [7,4,1,8,5,2,9,6,3]
+    if face_pos in [1, 4]:
+        for item in rotate_table_90:
             output += surface[item-1]
-    if face_pos in [4]:
-        for item in rotate_table[1]:
+    if face_pos in [0, 5]:
+        for item in rotate_table_180:
             output += surface[item-1]
     if face_pos in [2, 3]:
-        output = surface
+        for item in surface:
+            output += item 
     return output 
 
 def show_select_face(flag):
@@ -162,25 +163,27 @@ class VisionProcess(threading.Thread):
             if _update_flag:
                 for item in color_trans_table:
                     if grid_colors_A[4] == item[0]:
-                        if grid_colors_B == item[1]:
+                        if grid_colors_B[4] == item[1]:
                             table_item_in_used = item
+                            print('table_item_in_use  ',table_item_in_used)
                 surfaces[0] = trans_and_rotate_surface(0,grid_colors_A)
                 surfaces[4] = trans_and_rotate_surface(4,grid_colors_B)
- 
+                cv2.imshow(str(time.time()),image)
                 cv2.imwrite("record_image/"+str(face_number_A+1)+".JPEG",image)
                 cv2.imwrite("record_image/"+str(face_number_B+1)+".JPEG",image)
                 _update_flag=0 
 
             if _update_flag_A:
                 surfaces[current_face_pos] = trans_and_rotate_surface(current_face_pos,grid_colors_A)
-                print(current_face_pos,surfaces[current_face_pos])
+                print(surfaces)
                 cv2.imwrite("record_image/"+str(face_number_A+1)+".JPEG",image)
                 cv2.imshow(str(time.time()),image)
                 _update_flag_A=0 
 
             if _update_flag_B:
+                print('wo cao ',current_face_pos)
                 surfaces[current_face_pos] = trans_and_rotate_surface(current_face_pos,grid_colors_B)
-                print(current_face_pos,surfaces[current_face_pos])
+                print(surfaces)
                 cv2.imwrite("record_image/"+str(face_number_B+1)+".JPEG",image)
                 cv2.imshow(str(time.time()),image)
                 _update_flag_B=0 
