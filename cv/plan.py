@@ -6,18 +6,19 @@ def human_readable(string):
     data = []
     for i in range(54):
         char = string[i]
-        if char == 'D':
-            data.append('white  ')
-        if char == 'F':
-            data.append('red    ')
-        if char == 'B':
-            data.append('orange ')
-        if char == 'U':
-            data.append('yellow ')
-        if char == 'R':
-            data.append('green  ')
-        if char == 'L':
-            data.append('blue   ')
+        
+#        if char == 'D':
+#            data.append('white  ')
+#        if char == 'F':
+#            data.append('red    ')
+#        if char == 'B':
+#            data.append('orange ')
+#        if char == 'U':
+#            data.append('yellow ')
+#        if char == 'R':
+#            data.append('green  ')
+#        if char == 'L':
+#            data.append('blue   ')
 
     for i in range(6):
         data_sub = data[i*9: i*9+9]

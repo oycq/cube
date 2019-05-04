@@ -281,11 +281,11 @@ def scan():
     ser.write('abCD'.encode())
     time.sleep(release_time)
     odrive_rotate(1, -90)
-    time.sleep(0.100)# can be lower
+    time.sleep(0.120)# can be lower
     vision.update_surfaces_A(2)
     #white
     odrive_rotate(1, 180)
-    time.sleep(0.100)# can be lower
+    time.sleep(0.120)# can be lower
     vision.update_surfaces_A(5)
     #yellow
     last_rotate_states = 'abCD'
