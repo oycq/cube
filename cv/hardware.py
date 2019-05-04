@@ -2,6 +2,7 @@ import serial
 import time
 import odrive
 import os
+import vision
 
 serial_is_connected = 0
 pneumatic_states = [0, 0, 0, 0, 0]
@@ -48,7 +49,7 @@ base_accel = 140
 ex_accel = 140
 odrive_is_connected = 0
 odrv = None
-odrv_angles_bias = [-2086, -2500]
+odrv_angles_bias = [-2092, -2494]
 odrv_angles = [0 ,0] 
 def odrive_connect():
     global odrive_is_connected
@@ -81,7 +82,7 @@ def odrive_connect():
         odrive_is_connected = 1
         print("Odrive Connected")
 
-#odrive_connect()
+odrive_connect()
 
 def odrive_calibration(motorID):
     global ser
@@ -150,7 +151,7 @@ def odrive_rotate(motorID, angle):
             print('Can not move to expect position, Be careful!')
             os.abort()
         #print('0:  %7.1f   1:  %7.1f'%(odrv_angles[0],odrv_angles[1]))
-        print('%4d  %4d  %5.2f   %5.2f'%(i,motorID,odrv_angles[motorID],delta))
+        #print('%4d  %4d  %5.2f   %5.2f'%(i,motorID,odrv_angles[motorID],delta))
         time.sleep(0.001)
 
     odrv.axis0.trap_traj.config.accel_limit = base_accel * 10000
@@ -247,6 +248,8 @@ def cubic_rotate(command):
 #release_time = 0.080
 def scan():
     #orange blue
+    global last_rotate_states,pneumatic_states
+    vision.update_surfaces()
     ser.write('ABcd'.encode())
     time.sleep(release_time)
     odrive_rotate(0, -180)
@@ -258,6 +261,7 @@ def scan():
     time.sleep(clamp_time)
     ser.write('abCD'.encode())
     time.sleep(release_time)
+    vision.update_surfaces_B(1)
     #red 
     odrive_rotate(0, 180)
     odrive_rotate(1, -180)
@@ -269,6 +273,7 @@ def scan():
     time.sleep(clamp_time)
     ser.write('ABcd'.encode())
     time.sleep(release_time)
+    vision.update_surfaces_A(3)
     #green
     odrive_rotate(1, 90)
     ser.write('ABCD'.encode())
@@ -277,10 +282,14 @@ def scan():
     time.sleep(release_time)
     odrive_rotate(1, -90)
     time.sleep(0.100)# can be lower
+    vision.update_surfaces_A(2)
     #white
     odrive_rotate(1, 180)
+    time.sleep(0.100)# can be lower
+    vision.update_surfaces_A(5)
     #yellow
-    time.sleep(1)
+    last_rotate_states = 'abCD'
+    pneumatic_states = [0, 0, 1, 1, 0]
 
 
 def send_command(command):
@@ -292,7 +301,6 @@ def send_command(command):
         odrive_calibration(1)
 
     if command == 'Scan':
-        print('?????')
         scan()
 
     if command in ['Le', 'Lc', 'Re', 'Rc', 'Rise', 'Drop']:

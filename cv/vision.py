@@ -6,24 +6,57 @@ import numpy as np
 
 surfaces = ['RFDLUFDFR', 'FDBURBLRU', 'BRURFFFDF',
             'DBUUDBFRB', 'UDLLLUDLL', 'RLBUBBLDR']
+color_trans_ref   = ['ULFDRB']
+color_trans_table = [
+'UFRDBL','DFLUBR','FULBDR','BURFDL','LUBRDF','RUFLDB',
+'UBLDFR','DBRUFL','FDRBUL','BDLFUR','LDFRUB','RDBLUF',
+'ULFDRB','DLBURF','FLDBRU','BLUFRD','LFURBD','RFDLBU',
+'URBDLF','DRFULB','FRUBLD','BRDFLU','LBDRFU','RBULFD']
+table_item_in_used = 'BBBBBB'
+
 face_number=0
 grid_colors=[]
 _update_flag=0
 _update_flag_A=0
 _update_flag_B=0
+current_face_pos = 0
 _show_select_face_flag=0
 
 def update_surfaces():
     global _update_flag
     _update_flag=1
 
-def update_surfaces_A():
+# U R F D L B
+def update_surfaces_A(face_pos = 0):
     global _update_flag_A
+    global current_face_pos
+    current_face_pos = face_pos
     _update_flag_A=1
 
-def update_surfaces_B():
+def update_surfaces_B(face_pos = 0):
     global _update_flag_B
+    global __current_face_pos
+    current_face_pos = face_pos
     _update_flag_B=1
+
+def trans_and_rotate_surface(face_pos, surface):
+    output = ''
+    for i in range(9):
+        for j in range(6):
+            if surface[i] == table_item_in_used[j]:
+                surface[i] = table_item_in_used[j]
+                break
+    rotate_table = [[9,8,7,6,5,4,3,2,1],
+            [7,4,1,8,5,2,9,6,3]]
+    if face_pos in [0, 1, 5]:
+        for item in rotate_table[0]:
+            output += surface[item-1]
+    if face_pos in [4]:
+        for item in rotate_table[1]:
+            output += surface[item-1]
+    if face_pos in [2, 3]:
+        output = surface
+    return output 
 
 def show_select_face(flag):
     global _show_select_face_flag
@@ -48,20 +81,21 @@ class VisionProcess(threading.Thread):
         global face_number
         global grid_colors
         global _show_select_face_flag
+        global table_item_in_used
         while 1:
             _, image = cap.read()
             image = image[140:450, 180:550]
-            k = 5 
+            k = 4 
             grid_colors_A = [0] * 9
             grid_colors_B = [0] * 9
             face_number_A = 0
             face_number_B = 0
-            grid_center_list = [[(62 , 91 ), (101 , 84 ), (149, 80 ), 
-                                 (62 , 156), (99 , 157), (150, 165), 
-                                 (62 , 218), (100, 234), (150, 248)],
-                                [(213, 81 ), (259, 86 ), (292, 96 ),
-                                 (214, 167), (261, 159), (293, 157),
-                                 (213, 249), (262, 229), (293, 219)]]
+            grid_center_list = [[(60 , 91 ), (95 , 86 ), (147, 80 ), 
+                                 (60 , 156), (95 , 157), (147, 165), 
+                                 (60 , 218), (95, 234), (147, 248)],
+                                [(200, 81 ), (253, 86 ), (291, 90 ),
+                                 (200, 167), (255, 159), (293, 157),
+                                 (200, 249), (256, 231), (290, 219)]]
             for major in range(2):
                 grid_center = grid_center_list[major]
                 grid_colors = [0] * 9
@@ -80,11 +114,11 @@ class VisionProcess(threading.Thread):
                     red_flag=0
                     green_flag=0
                     white_flag=0
-                    if r+b+g<200:
+                    if r+b+g<150:
                         red_flag=1
                     if r<80:
                         green_flag=1
-                    if min([r,g,b])/(max([r,g,b])+0.01)>0.65:
+                    if min([r,g,b])/(max([r,g,b])+0.01)>0.2:
                         white_flag=1
                     grid[:,:]=(b,g,r)
                     cvt=cv2.cvtColor(grid, cv2.COLOR_BGR2HSV)
@@ -126,20 +160,29 @@ class VisionProcess(threading.Thread):
                     face_number_B = face_number 
 
             if _update_flag:
-                surfaces[face_number_A] = grid_colors_A
-                surfaces[face_number_B] = grid_colors_B
+                for item in color_trans_table:
+                    if grid_colors_A[4] == item[0]:
+                        if grid_colors_B == item[1]:
+                            table_item_in_used = item
+                surfaces[0] = trans_and_rotate_surface(0,grid_colors_A)
+                surfaces[4] = trans_and_rotate_surface(4,grid_colors_B)
+ 
                 cv2.imwrite("record_image/"+str(face_number_A+1)+".JPEG",image)
                 cv2.imwrite("record_image/"+str(face_number_B+1)+".JPEG",image)
                 _update_flag=0 
 
             if _update_flag_A:
-                surfaces[face_number_A] = grid_colors_A
+                surfaces[current_face_pos] = trans_and_rotate_surface(current_face_pos,grid_colors_A)
+                print(current_face_pos,surfaces[current_face_pos])
                 cv2.imwrite("record_image/"+str(face_number_A+1)+".JPEG",image)
+                cv2.imshow(str(time.time()),image)
                 _update_flag_A=0 
 
             if _update_flag_B:
-                surfaces[face_number_B] = grid_colors_B
+                surfaces[current_face_pos] = trans_and_rotate_surface(current_face_pos,grid_colors_B)
+                print(current_face_pos,surfaces[current_face_pos])
                 cv2.imwrite("record_image/"+str(face_number_B+1)+".JPEG",image)
+                cv2.imshow(str(time.time()),image)
                 _update_flag_B=0 
 
             if _show_select_face_flag==-1:
