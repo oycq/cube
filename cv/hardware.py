@@ -286,10 +286,10 @@ def scan():
     ser.write('abCD'.encode())
     time.sleep(release_time)
     odrive_rotate(1, -90)
-    time.sleep(0.120)# can be lower
+    time.sleep(0.150)# can be lower
     vision.update_surfaces_A(2)
     odrive_rotate(1, 180)
-    time.sleep(0.120)# can be lower
+    time.sleep(0.150)# can be lower
     vision.update_surfaces_A(5)
     last_rotate_states = 'abCD'
     pneumatic_states = [0, 0, 1, 1, 0]
@@ -298,7 +298,7 @@ def final():
     global begin_time
     begin_time = time.time()
     scan()
-    time.sleep(0.04)
+    time.sleep(0.05)
     plan.surfaces_2_plan(vision.surfaces) 
     
 def finished():
