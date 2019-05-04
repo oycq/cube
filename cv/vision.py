@@ -117,11 +117,11 @@ class VisionProcess(threading.Thread):
                     red_flag=0
                     green_flag=0
                     white_flag=0
-                    if r+b+g<150:
+                    if r+b+g<130:
                         red_flag=1
-                    if r<80:
+                    if r<30:
                         green_flag=1
-                    if min([r,g,b])/(max([r,g,b])+0.01)>0.2:
+                    if min([r,g,b])/(max([r,g,b])+0.01)>0.3:
                         white_flag=1
                     grid[:,:]=(b,g,r)
                     cvt=cv2.cvtColor(grid, cv2.COLOR_BGR2HSV)

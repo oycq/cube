@@ -2,9 +2,11 @@ import serial
 import time
 import odrive
 import os
+import plan 
 import vision
 
 serial_is_connected = 0
+begin_time = 0
 pneumatic_states = [0, 0, 0, 0, 0]
 pneumatic_table = [['a', 'A'],['b', 'B'],['c', 'C'],['d','D'],['e', 'E']]
 last_rotate_states = 'abcd'
@@ -247,9 +249,14 @@ def cubic_rotate(command):
 #clamp_time = 0.080 - delay_time 
 #release_time = 0.080
 def scan():
-    #orange blue
     global last_rotate_states,pneumatic_states
     vision.update_surfaces()
+    ser.write('AbcD'.encode())
+    time.sleep(clamp_time)
+    ser.write('e'.encode())
+    time.sleep(clamp_time)
+    ser.write('ABcD'.encode())
+    time.sleep(clamp_time)
     ser.write('ABcd'.encode())
     time.sleep(release_time)
     odrive_rotate(0, -180)
@@ -262,7 +269,6 @@ def scan():
     ser.write('abCD'.encode())
     time.sleep(release_time)
     vision.update_surfaces_B(1)
-    #red 
     odrive_rotate(0, 180)
     odrive_rotate(1, -180)
     ser.write('AbCD'.encode())
@@ -274,7 +280,6 @@ def scan():
     ser.write('ABcd'.encode())
     time.sleep(release_time)
     vision.update_surfaces_A(3)
-    #green
     odrive_rotate(1, 90)
     ser.write('ABCD'.encode())
     time.sleep(clamp_time)
@@ -283,15 +288,26 @@ def scan():
     odrive_rotate(1, -90)
     time.sleep(0.120)# can be lower
     vision.update_surfaces_A(2)
-    #white
     odrive_rotate(1, 180)
     time.sleep(0.120)# can be lower
     vision.update_surfaces_A(5)
-    #yellow
     last_rotate_states = 'abCD'
     pneumatic_states = [0, 0, 1, 1, 0]
-
-
+    
+def final():
+    global begin_time
+    begin_time = time.time()
+    scan()
+    time.sleep(0.04)
+    plan.surfaces_2_plan(vision.surfaces) 
+    
+def finished():
+    global last_rotate_states,pneumatic_states
+    ser.write('abcd'.encode())
+    last_rotate_states = 'abcd'
+    pneumatic_states = [0, 0, 0, 0, 0]
+    print('Total time: %5.3f s'%(time.time()-begin_time))
+ 
 def send_command(command):
     if command == 'Odrive':
         odrive_connect()
@@ -302,6 +318,12 @@ def send_command(command):
 
     if command == 'Scan':
         scan()
+
+    if command == 'Final':
+        final()
+
+    if command == 'Finished':
+        finished()
 
     if command in ['Le', 'Lc', 'Re', 'Rc', 'Rise', 'Drop']:
         control_pneumatic_valve(command)

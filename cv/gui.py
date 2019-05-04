@@ -106,6 +106,7 @@ root.bind('<Alt-Right>',lambda event: mission.add(['Od1R3']))
 
 
 root.bind('<Control-Alt-j>',lambda event: mission.add(['Scan'])) 
+root.bind('<space>',lambda event: mission.add(['Final'])) 
 
 temp = tk.Button(root, text='+', command=lambda: mission.add(['+']), width=10)
 temp.grid(row=0, column=0, columnspan=1)  # +

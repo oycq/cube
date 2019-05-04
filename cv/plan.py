@@ -1,53 +1,33 @@
 import socket
+import mission 
 
 hardware_plan = []
 
-def human_readable(string):
-    data = []
-    for i in range(54):
-        char = string[i]
-        
-#        if char == 'D':
-#            data.append('white  ')
-#        if char == 'F':
-#            data.append('red    ')
-#        if char == 'B':
-#            data.append('orange ')
-#        if char == 'U':
-#            data.append('yellow ')
-#        if char == 'R':
-#            data.append('green  ')
-#        if char == 'L':
-#            data.append('blue   ')
-
-    for i in range(6):
-        data_sub = data[i*9: i*9+9]
-        print(data_sub[0:3])
-        print(data_sub[3:6])
-        print(data_sub[6:9])
-        print('-----',data_sub[4])
-
-def hardware_execute_entirety_rotate(number):
-    reverse = [2, 1, 0, 3]
-    return reverse[number] + 4
-
-
-def hardware_execute_bottom_rotate(number):
-    reverse = [2, 1, 0, 3]
-    return reverse[number - 1] + 1
-
-
 def surfaces_2_plan(surfaces):
     global hardware_plan
+    trans_ref = 'LUFRDB'
+    trans_table = {
+            'U1':'FURBDL',
+            'U2':'RUBLDF',
+            'U3':'BULFDR',
+            'L1':'LBURFD',
+            'L2':'LDBRUF',
+            'L3':'LFDRBU',
+            'F1':'LFDRBU',
+            'F2':'LFDRBU',
+            'F3':'LFDRBU',
+            'D1':'LUFRDB',
+            'D2':'LUFRDB',
+            'D3':'LUFRDB',
+            'R1':'LUFRDB',
+            'R2':'LUFRDB',
+            'R3':'LUFRDB',
+            'B1':'BULFDR',
+            'B2':'BULFDR',
+            'B3':'BULFDR'} 
+    init_trans = 'RBDLFU'
     hardware_plan = []
-    S = [ 'L', 'F', 'R', 'B', 'U', 'D']
-    T = [['F', 'R', 'B', 'L', 'U', 'D'],  # +90
-         ['R', 'B', 'L', 'F', 'U', 'D'],  # 180
-         ['B', 'L', 'F', 'R', 'U', 'D'],  # 270
-         ['L', 'U', 'R', 'D', 'B', 'F']]  # K90
-    N = [2, 1, 0, 3, 3, -1]
 
-    # ask for server and find origin solution
     plan = []
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 #    s.connect(('118.24.87.139', 8080))
@@ -56,7 +36,6 @@ def surfaces_2_plan(surfaces):
     for i in range(6):
         for j in range(9):
             socket_input_string += surfaces[i][j]
-    human_readable(socket_input_string)
     s.sendall((socket_input_string + '\n').encode())
     socket_receieve_str = s.recv(2048).decode().strip('\n')
     s.close()
@@ -70,28 +49,22 @@ def surfaces_2_plan(surfaces):
         print(socket_receieve_str)
         for word in words[0:-1]:
             plan.append([word[0], word[1]])
-
-        # adjust according to init
-        for j in range(len(plan)):
-            for k in range(6):
-                if plan[j][0] == S[k]:
-                    plan[j][0] = T[3][k]
+        trans = ''
+        for i in range(len(plan)):
+            for j in range(6):
+                if plan[i][0] == trans_ref[j]:
+                    plan[i][0] = init_trans[j]
                     break
-        # get hardware solution
-        for step in range(len(plan)):
-            while True:
-                for find_i in range(6):
-                    if plan[step][0] == S[find_i]:
-                        i = find_i
-                        break
-                if N[i] == -1:
-                    hardware_plan.append(hardware_execute_bottom_rotate(int(plan[step][1])))
-                    break
-                else:
-                    hardware_plan.append(hardware_execute_entirety_rotate(N[i]))
-                    for j in range(len(plan)):
-                        for k in range(6):
-                            if plan[j][0] == S[k]:
-                                plan[j][0] = T[N[i]][k]
-                                break
+        for i in range(len(plan)):
+            trans = trans_table[plan[i][0] + plan[i][1]]
+            for j in range(len(plan)):
+                if j > i:
+                    for k in range(len(trans)):
+                        if plan[j][0] == trans_ref[k]:
+                            plan[j][0] = trans[k]
+                            break
+        plan_string = []
+        for item in plan:
+            plan_string.append(item[0] + item[1])
+        mission.add(plan_string+['Finished'])
         return True
