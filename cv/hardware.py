@@ -156,12 +156,12 @@ def odrive_rotate(motorID, angle):
     odrv.axis0.trap_traj.config.accel_limit = base_accel * 10000
     odrv.axis0.trap_traj.config.accel_limit = base_accel * 10000
 
+delay_time = 0.035
+clamp_time = 0.080 - delay_time 
+release_time = 0.080
 def cubic_rotate(command):
     print(command)
     global last_rotate_states
-    delay_time = 0.035
-    clamp_time = 0.080 - delay_time 
-    release_time = 0.080
     dict = {
             'L3': ['AbCD', ( 0 ,  90), 'ABcd', ( 0 , -90)],
             'R3': ['ABCd', ( 0 ,  90), 'ABcd', ( 0 , -90)],
@@ -242,6 +242,47 @@ def cubic_rotate(command):
                 print(item)
                 time.sleep(1)
 
+#delay_time = 0.035
+#clamp_time = 0.080 - delay_time 
+#release_time = 0.080
+def scan():
+    #orange blue
+    ser.write('ABcd'.encode())
+    time.sleep(release_time)
+    odrive_rotate(0, -180)
+    ser.write('ABcD'.encode())
+    time.sleep(clamp_time)
+    ser.write('aBcD'.encode())
+    time.sleep(clamp_time)
+    ser.write('aBCD'.encode())
+    time.sleep(clamp_time)
+    ser.write('abCD'.encode())
+    time.sleep(release_time)
+    #red 
+    odrive_rotate(0, 180)
+    odrive_rotate(1, -180)
+    ser.write('AbCD'.encode())
+    time.sleep(clamp_time)
+    ser.write('AbCd'.encode())
+    time.sleep(clamp_time)
+    ser.write('ABCd'.encode())
+    time.sleep(clamp_time)
+    ser.write('ABcd'.encode())
+    time.sleep(release_time)
+    #green
+    odrive_rotate(1, 90)
+    ser.write('ABCD'.encode())
+    time.sleep(clamp_time)
+    ser.write('abCD'.encode())
+    time.sleep(release_time)
+    odrive_rotate(1, -90)
+    time.sleep(0.100)# can be lower
+    #white
+    odrive_rotate(1, 180)
+    #yellow
+    time.sleep(1)
+
+
 def send_command(command):
     if command == 'Odrive':
         odrive_connect()
@@ -249,6 +290,10 @@ def send_command(command):
         odrive_calibration(0)
     if command == 'Cal1':
         odrive_calibration(1)
+
+    if command == 'Scan':
+        print('?????')
+        scan()
 
     if command in ['Le', 'Lc', 'Re', 'Rc', 'Rise', 'Drop']:
         control_pneumatic_valve(command)
